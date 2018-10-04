@@ -1,0 +1,22 @@
+[  "This is example data file in JSON format", 
+   100.2, 
+   3.141e100, 
+   {  "type" :  "Object data", 
+      "value":  -1, 
+      "array":  [1, 200, 3, "the string"]
+   }, 
+
+   {  "type":   "Nested data", 
+      "array":  [ 1, 2, 3, 4, 
+                  {  "type":  "Another object level", 
+                     "array": ["a", 2, null, false, true], 
+                     "object": {"n": null}, 
+                     "zero": 0
+                  }
+                ]   
+   },
+
+   "The \"difficult\" string: \t\r\n
+    XML predefined entities: & (\"&amp;\"), and other: < > ' 
+  "
+]

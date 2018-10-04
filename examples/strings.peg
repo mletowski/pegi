@@ -1,0 +1,13 @@
+#  Sample grammar for pegi.
+#  Parses strings in double quotes, using backslash as escape character.
+#  Examples of valid input:
+#      "abc def"
+#      "The line\nThe \"second\" line\"
+#      " \t\r\n"
+
+string = "\"" elem* "\""        { "\"" $elem* "\"" };
+
+elem = !'\\"' . $char           { $char }
+     | "\\" . $esc              { "\\" $esc };
+
+goal = (string ' \t\r\n'+)+     { ("line: " $string "\n")* }     

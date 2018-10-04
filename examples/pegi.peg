@@ -1,0 +1,89 @@
+#  Pegi metagrammar 
+#--------------------
+#
+#  This is grammar of grammar file, which is passed
+#  to pegi interpreter.
+#
+#  This file contains definition of the grammar in format
+#  suitable for parsing by itself.  
+#
+
+comment = "#" (!"\n" .)* "\n";
+
+string = '"' string_element* '"'          { 
+                                             "\"" $string_element* "\""
+                                          };
+
+string_element = !'\\"' . $char           {
+                                             $char 
+                                          }
+               | "\\" . $esc              {
+                                             "\\" $esc
+                                          };
+
+class = "'" class_element* "'"            { 
+                                             "'" $class_element* "'"
+                                          };
+
+class_element = !'\\\'' . $char           {
+                                             $char 
+                                          }
+               | "\\" . $esc              {
+                                             "\\" $esc
+                                          };
+
+w = ' \t\r\n'+ | comment;
+
+letter = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' $ch  { $ch };
+
+digit = '0123456789' $ch { $ch };
+
+alnum = letter $ch   { $ch }
+      | digit  $ch   { $ch };
+
+name = letter alnum* { $letter $alnum* };
+
+eof = w* !.;
+
+goal = w* production ( w* ";" w* production $ps )*      { 
+                                                                $production ( ";\n" $ps )*
+                                                        };
+
+element = ['&!' $pref w*] scalar [w* suffix]            {
+                                                                [$pref] $scalar [$suffix]
+                                                        }
+        | "[" sequence w* "]"                           {
+                                                                "[" $sequence "]"
+                                                        }        
+        | "(" sequence w* ")"  [w* '+*' $suf]           {
+                                                                "(" $sequence ")" [ $suf ]
+                                                        };
+
+suffix = '+*' $suf  { $suf }
+       | "$" name   { " $" $name };
+
+scalar = "."    { "." }
+       | name   { $name }
+       | string { $string }
+       | class  { $class };
+
+sequence = (w* element)*    { ($element " ")* };
+
+production = name w* "=" w* clause $c 
+             (w* "|" clause $cs)*                       {
+                                                                $name " = " $c ("\n     | " $cs)*
+                                                        };
+
+clause = sequence  w* [pattern]   { $sequence  [ "    " $pattern ] };
+
+pattern = "{" (w* pattern_element)* w* "}"  {
+                                                "\n     {\n" 
+                                                ( "         " $pattern_element "\n")*
+                                                "\n     }\n"
+                                            };
+
+pattern_element = string [w* '+*' $suf]                            { $string  [$suf] }
+                | "$" name   [w* '+*' $suf]                        { "$" $name  [$suf] }
+                | "[" (w* pattern_element)* w* "]"                 { "[" (" " $pattern_element)* " ]" }
+                | "(" (w* pattern_element)* w* ")" w* '+*' $suf    { "(" (" " $pattern_element)* " )" $suf };
+

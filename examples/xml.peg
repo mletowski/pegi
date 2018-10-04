@@ -1,0 +1,77 @@
+#  Example grammar for pegi  -  convert XML to json
+#
+#  The format of accepted XML is compatible with output of json.peg.
+#  The two parsers can be treated as reciprocal.
+#
+
+goal = ws "<json>"
+       ws value ws "</json>"    { $value };
+
+xml_char = "\n"                    { "\\n" }
+         | "\r"                    { "\\r" }
+         | "\t"                    { "\\t" }
+         | "\\"                    { "\\\\"  }
+         | "\""                    { "\\\"" }
+         | "&" entity ";"          { $entity }
+         | ! "</string>" . $ch     { $ch };
+
+entity = "amp"           { "&" }
+       | "lt"            { "<" }
+       | "gt"            { ">" };
+
+value  = string $x    { $x }
+       | number $x    { $x }
+       | object $x    { $x }
+       | array  $x    { $x }
+       | "<false" ws "/>"    { "false" }
+       | "<true"  ws "/>"    { "true" }
+       | "<null"  ws "/>"    { "null" };
+
+ws = ' \t\r\n'*;
+
+array = "<array>" [ws value $x1] (ws value)* ws "</array>"      
+	{ "[" [$x1] (",\n  " $value)* "\n]\n" };
+
+object = "<object>" ws member (ws member)* ws "</object>"               
+        { "{" $member (",\n  " $member)* "}" };
+
+number = "<number>" numchar+ "</number>"                        
+        { $numchar+ };
+
+numchar = '0123456789.-+eE' $ch   { $ch };
+
+string = "<string>" xml_char* "</string>"                         
+        { "\"" $xml_char* "\"" };
+
+m_array = "<array"   nameattr ws ">" [ws value $x1] (ws value)* ws "</array>"
+        { $nameattr "[" [$x1] (",\n    " $value)* "\n   ]\n" };
+
+m_object = "<object" nameattr ws ">" ws member (ws member)* ws "</object>"
+        { $nameattr "{" $member (",\n    " $member)* "}" };
+
+m_number = "<number" nameattr ws ">" numchar+ "</number>"
+        { $nameattr $numchar+ };
+
+m_string = "<string" nameattr ws ">" xml_char* "</string>"
+        { $nameattr "\"" $xml_char* "\"" };
+
+nameattr = " " ws "name=" ws name                                         
+        { $name ":" };
+
+member  = m_string $x    { $x }
+       |  m_number $x    { $x }
+       |  m_object $x    { $x }
+       |  m_array  $x    { $x }
+       |  "<false" nameattr  ws "/>"   { $nameattr "false" }
+       |  "<true"  nameattr  ws "/>"   { $nameattr "true" }
+       |  "<null"  nameattr  ws "/>"   { $nameattr "null" };
+
+name = "\"" char*  "\""       { "\"" $char* "\"" };
+
+char = unescaped  $ch         { $ch }
+     | "\\" escc              { "\\" $escc };
+
+escc = '"\\/bfnrt' $ch        { $ch };
+
+unescaped = !'\\"' . $ch       { $ch };    # warning: this is not precise   
+

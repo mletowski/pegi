@@ -1,0 +1,125 @@
+#
+#  JSON grammar based directly on RFC8259.
+#  Output of this parser is formatted as XML with 
+#  following mapping used:
+#
+#       document :   <json> ... </json>
+#       number   :   <number> ... </number>
+#       string   :   <string> ... </string>
+#       null     :   <null />
+#       true     :   <true />
+#       false    :   <false />
+#       array    :   <array> ... elements </array>
+#       object   :   <object>
+#                        <string name="some name"> ... </string>  
+#                        <null name="some other name" />
+#                    </object>
+#
+#  The output should be parsable by xml.peg
+
+#
+#  Character conversion productions:
+#
+#
+json_char = "\\"  j_esc            { $j_esc }
+          | "\\"  . $ch            { $ch    }
+          | "&"                    { "&amp;" }
+          | "<"                    { "&lt;" }
+          | ">"                    { "&gt;" }
+          | ! '\\"' . $ch          { $ch    };
+
+j_esc =  "n"                       { "\n" }
+      |  "r"                       { "\r" }
+      |  "t"                       { "\t" }
+      |  "\\"                      { "\\" }
+      |  "\""                      { "\"" };    
+
+#  JSON delimiters:
+begin_array     = ws "[" ws  ; #  [ left square bracket
+begin_object    = ws "{" ws  ; #  { left curly bracket
+end_array       = ws "]" ws  ; #  ] right square bracket
+end_object      = ws "}" ws  ; #  } right curly bracket
+name_separator  = ws ":" ws  ; #  : colon
+value_separator = ws "," ws  ; #  , comma
+
+#  Optional white space
+ws = ' \t\r\n'* ;
+
+#  Field name:
+name = "\"" char* "\""             { "\"" $char* "\"" };
+
+char = unescaped  $ch              { $ch }
+     | "\\" escc                   { "\\" $escc };
+
+unescaped = !'\\"' . $ch           { $ch };    # TODO: this is not precise   
+
+escc = '"\\/bfnrt' $ch             { $ch }
+     | "u" hex $h1 hex $h2 
+         hex $h3 hex $h4           { "u" $h1 $h2 $h3 $h4 };
+
+hex = 'ABCDEF' $ch                 { $ch };
+ 
+#
+#  Value parsing is divided to two parts.
+#  First part is used in predicate call and creates
+#  place for optional "name" attribute in object members.
+#  See below - notice the "member" production.
+#  
+value1 = "false"                   { "<false" } 
+      | "null"                     { "<null" }
+      | "true"                     { "<true" }
+      | object1 $x                 { $x }
+      | array1 $x                  { $x }
+      | number1 $x                 { $x }
+      | string1 $x                 { $x };
+
+value2 = "false"                   { " />" } 
+      | "null"                     { " />" }
+      | "true"                     { " />" }
+      | object2 $x                 { $x }
+      | array2 $x                  { $x }
+      | number2 $x                 { $x }
+      | string2 $x                 { $x };
+
+object1 = begin_object             { "<object" };
+
+object2 = begin_object 
+          [ member 
+              (value_separator member)* ] 
+          end_object               { ">" [$member $member*] 
+                                     "\n   </object>" };
+
+member = name name_separator &value1 value2   
+                           	   { "\n    " $value1 " name=" $name $value2 };
+
+array1 = begin_array               { "<array" };
+array2 = begin_array [ &value1 value2 
+  	  (value_separator &value1 value2)*] 
+        end_array                  { 
+                		       ">\n  " [ $value1 $value2 
+                                           ("\n  " $value1 $value2)* ] 
+        		                "\n  </array>" 
+                              	   };
+
+number1 = [minus] int            { "<number" };
+number2 = [minus] int [ frac ] [ exp ]       
+	{ ">" [$minus] $int [$frac] [$exp] "</number>" };
+
+minus  = "-"                       {"-"};
+decimal_point = "."                {"."};            
+digit1_9 = '123456789' $x          {$x };
+e = 'eE' $x                        {$x };
+exp = e [ '-+' $s ] DIGIT+         {$e [$s] $DIGIT+};
+frac = decimal_point DIGIT+        {$decimal_point $DIGIT+};
+int = "0" {"0"} | digit1_9 DIGIT*  { $digit1_9 $DIGIT* };
+
+DIGIT = "0"       { "0" }
+      | digit1_9  { $digit1_9 };
+
+string1 = "\""   { "<string" };
+string2 = "\"" json_char* "\""    { ">" $json_char* "</string>" };
+
+JSON_text = ws &value1 value2 ws  { "<json>\n" $value1 $value2 
+				    "\n</json>\n" };
+
+goal = JSON_text { $JSON_text };

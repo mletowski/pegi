@@ -1,0 +1,42 @@
+#
+#   Definitions for two-pass parser parsecsv.sh
+#
+
+string = '"' string_element* '"'          { 
+                                             "\"" $string_element* "\""
+                                          };
+
+string_element = !'\\"' . $char           {
+                                             $char 
+                                          }
+               | "\\" . $esc              {
+                                             "\\" $esc
+                                          };
+
+
+w = ' \t\r'+;
+
+sep = ' \t'* "," ' \t'*;
+
+letter = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' $ch  { $ch };
+
+digit = '0123456789' $ch { $ch };
+
+alnum = letter $ch   { $ch }
+      | digit  $ch   { $ch };
+
+name = letter alnum* { $letter $alnum* };
+
+number = (digit $d)+ ["." (digit $f)+]   { $d+ [ $f+ ] };
+
+field = name   { $name }
+      | string { $string }
+      | number { $number };
+
+goal = (line w* "\n")+   {  
+                                "<xml>\n"
+                                "<data>\n"
+                                $line+ 
+                                "</data>\n"
+                                "</xml>\n"
+                         };

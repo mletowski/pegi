@@ -1,0 +1,8 @@
+#  Sample grammar for pegi.
+#  Basic decimal numbers grammar.
+
+digit = '0123456789' $x                 { $x };
+
+number = ['+-' $s] digit+ ["." digit+]  { [$s] $digit+ ["." $digit+] };
+
+goal = (number ' \t\r\n'+)+             { ("data: " $number "\n")+ };

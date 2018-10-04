@@ -1,0 +1,35 @@
+#
+#  Define and test character conversion between JSON and XML strings.
+#
+
+json2xml = "\"" json_char* "\""                 { "<string>" $json_char* "</string>" };
+
+json_char = "\\"  j_esc            { $j_esc }
+          | "\\"  . $ch            { $ch    }
+          | "&"                    { "&amp;" }
+          | "<"                    { "&lt;" }
+          | ">"                    { "&gt;" }
+          | ! '\\"' . $ch          { $ch    };
+
+j_esc =  "n"                       { "\n" }
+      |  "r"                       { "\r" }
+      |  "t"                       { "\t" }
+      |  "\\"                      { "\\" }
+      |  "\""                      { "\"" };    
+
+xml2json = "<string>" xml_char* "</string>"     { "\"" $xml_char* "\"" };
+
+xml_char = "\n"                    { "\\n" }
+         | "\r"                    { "\\r" }
+         | "\t"                    { "\\t" }
+         | "\\"                    { "\\\\"  }
+         | "\""                    { "\\\"" }
+         | "&" entity ";"          { $entity }
+         | ! "</string>" . $ch     { $ch };
+
+entity = "amp"           { "&" }
+       | "lt"            { "<" }
+       | "gt"            { ">" };
+
+#  goal = json2xml  $s         { $s };
+goal = xml2json  $s      { $s };

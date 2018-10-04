@@ -1,0 +1,25 @@
+digit = '0123456789' $x    { $x };
+
+number = digit* ["." digit+]      { $digit+ ["." $digit+] };
+
+factor = number $x         { $x }
+       | "(" ws sum ws ")" { $sum }; 
+
+mul = factor 
+      (ws '*/%' $OP
+       ws factor)*
+      {
+          $factor " " ($factor " " $OP)*
+      };
+
+sum = mul 
+      (ws '-+' $OP
+       ws mul)*
+      {
+          $mul " " ($mul " " $OP)*
+      };
+
+ws = ' \t\r\n'*;
+
+goal = ws sum $x ws !.    { "9 k " $x " p" };
+        

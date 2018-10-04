@@ -1,0 +1,55 @@
+#  Sample grammar for pegi - converting csv data to json
+#  Example of two-pass parsing
+#
+#  First pass extracts column names and builds the grammar for
+#  second pass.  The wrapper script for the two passes 
+#  is in parsecsv.sh 
+#
+
+string = '"' string_element* '"'          { 
+                                             "\"" $string_element* "\""
+                                          };
+
+string_element = !'\\"' . $char           {
+                                             $char 
+                                          }
+               | "\\" . $esc              {
+                                             "\\" $esc
+                                          };
+
+letter = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' $ch  { $ch };
+
+digit = '0123456789' $ch { $ch };
+
+alnum = letter $ch   { $ch }
+      | digit  $ch   { $ch };
+
+name = letter alnum* { $letter $alnum* };
+
+w = ' \t\r';
+
+header_decl =  w* name $n1 w* ("," w* name $n2 w*)*      {
+                                                               $n1 " = field {"
+                                                               "\n          \"    <field name=\\\"" $n1 "\\\">\" $field \"</field>\"" 
+                                                               "\n           };\n"
+
+                                                              ($n2 " = field {"
+                                                               "\n          \"\n    <field name=\\\"" $n2 "\\\">\" $field \"</field>\"" 
+                                                               "\n           };\n")*
+
+                                                         };    
+
+header =  w* name $n1 w* ("," w* name $n2 w*)*      {
+                                                          "line = w* " $n1 (" sep " $n2)*
+                                                          "\n   {"
+                                                          "\n\"  <line>\\n\""
+                                                          "\n       $" $n1
+                                                         ("\n       $" $n2)*
+                                                          "\n\"\n  </line>\\n\""
+                                                          "\n   };\n"
+                                                    };    
+
+goal = &header_decl  header   {         
+                                        $header_decl "\n\n" 
+                                        $header "\n" 
+                              };
