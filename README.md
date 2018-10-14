@@ -12,7 +12,7 @@ The derivation tree is written down using **patterns** defined in grammar descri
 The following example translates arithmetic expressions into command sequence for arbitraly precision
 calculator dc(1) :
 
-**_The grammar definition : _**
+**The grammar definition : **
 
 ```
 digit = '0123456789' $x                  { $x };
@@ -25,12 +25,12 @@ ws = ' \t\r\n'*;
 goal = ws sum $x ws !.                   { "9 k " $x " p" };
    ```    
 
-**_Input data : _**
+**Input data : **
 ``` 
   1 + 2 * 3 - 4 
 ```
 
-**_pegi output : _**
+**pegi output : **
 ``` 
  9 k 1  2 3 * +4  - p
 ```
