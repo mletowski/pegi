@@ -12,7 +12,7 @@ The derivation tree is written down using **patterns** defined in grammar descri
 The following example translates arithmetic expressions into command sequence for arbitraly precision
 calculator dc(1) :
 
-**The grammar definition : **
+*The grammar definition :*
 
 ```
 digit = '0123456789' $x                  { $x };
@@ -25,12 +25,12 @@ ws = ' \t\r\n'*;
 goal = ws sum $x ws !.                   { "9 k " $x " p" };
    ```    
 
-**Input data : **
+*Input data :*
 ``` 
   1 + 2 * 3 - 4 
 ```
 
-**pegi output : **
+*pegi output :*
 ``` 
  9 k 1  2 3 * +4  - p
 ```
@@ -64,9 +64,10 @@ Currently there is only one commandline option: -h (help).
 The program reads user grammar from the grammar_file and tries to parse the files given as arguments.
 
 ## Syntax of grammar description ("metagrammar") 
-*See pegi.peg file in examples subdirectory for the metagrammar definition *
 
- *... to be completed ... *
+See pegi.peg file in examples subdirectory for the metagrammar definition.
+
+... to be completed ...
 
 ## Future plans
 
