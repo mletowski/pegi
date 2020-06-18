@@ -80,4 +80,4 @@ See pegi.peg file in examples subdirectory for the metagrammar definition.
 
 The pegi parser is distributed under the terms of BSD License (see the LICENSE file for details).
 
-Copyright 2018 Marek Łętowski (letowski@gmail.com) 
+Copyright 2018 Marek Łętowski (letowski@gmail.com)
